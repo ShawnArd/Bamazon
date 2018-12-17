@@ -57,64 +57,66 @@ const valid = (val) => {
     }
 }
 
-const userPrompt=() => {
+const userPrompt=() => { 
+  
+        // Prompt user for item Selection and Quantity
+        inquirer.prompt([
+            {
+                type: 'input',
+                name: 'item_no',
+                message:"Enter the Item No. you would like to buy.",
+                validate: valid,
+                filter: Number
+            },
+            {
+                type: 'input',
+                name: 'quantity',
+                message: 'How many would you like to buy?',
+                validate: valid,
+                filter: Number
+            }
+        ]).then(function(res) {
     
-        // prompt for info about the item being put up for auction
-        inquirer
-          .prompt([
-            {
-              name: "item",
-              type: "input",
-              validate: valid,
-              message: "Please select the item number you would like to purchase",
-              filter: Number
-            },
-            {
-              name: "quantity",
-              type: "input",
-              validate: valid,
-              message: "Please input how many of the items you would like to purchase?",
-              filter: Number
-            },
-
-          ])
-          .then(function(answer) {
-            // when finished prompting, insert a new item into the db with that info
-          
-                var item = answer.item;
-                var quantity = answer.quantity;
-
-                db = 'SELECT * FROM products';
-
-                // console.log(item)
-                // console.log(quantity)
-
-	        // Make the db query
-	            connection.query(db, function(err, data) {
-                    if (err) throw err;
-                    
-                    console.log(data[0])
-                    if (quantity <= data[0].stock_quantity) {
-                        					
-                        var updateQueryStr = 'UPDATE products SET stock_quantity = ' + (data[0].stock_quantity - quantity) + ' WHERE item_id = ' + item;
-                        					
-                        	connection.query(updateQueryStr, function(err, data) {
-                        			if (err) throw err;
+            var item = res.item_no;
+            var quantity = res.quantity;
+    
+            // Used to Select Everything from the database the ? is a placeholder filed by the primary key item id
+            var query = 'SELECT * FROM products WHERE ?';
+    
+            connection.query(query, {item_id: item}, function(err, data) {
+                if (err) throw err;
+    
+                   var product = data[0];
+    
+                    // Checks that the quantity requested is in stock otherwise the user request is rejected
+                    if (quantity <= product.stock_quantity) {
                         
-                        						// End the database connection
-                        						connection.end();
-                        					})
-                        				} else {
-                        					console.log('Sorry, there is not enough product in stock, your order can not be placed as is.');
+                        //Calculate new Stock
+                        var newStock = product.stock_quantity - quantity;
+    
+                        // Updating the database if the product is in stock
+                        var updateDatabase = 'UPDATE products SET stock_quantity = ' + newStock + ' WHERE item_id = ' + item;
 
-                                            Bamazon();
-                                        }
-             
-                    },
-                );
-          });
-}
+                        // Tell The user their item has been purchased and update the database
+                        connection.query(updateDatabase, function(err, data) {
+                            if (err) throw err;
+    
+                            console.log('Your order has been placed! \n The total cost is $' + product.price.toFixed(2) * quantity);
 
+
+                            connection.end();
+                        })
+                        //runs if the the quantity requested is larger than the stock
+                    } else {
+                        console.log('Sorry, there is not enough in stock, please order a lower amount');
+                       
+    
+                        Bamazon();
+                    
+                }
+            })
+        })
+    }
 
 
 Bamazon();
