@@ -1,10 +1,11 @@
+//required npm packages
 const inquirer = require("inquirer");
 const mysql = require('mysql');
 
 var connection = mysql.createConnection({
     host: "localhost",
   
-    // Your port; if not 3306
+    //mySQL port
     port: 3307,
   
     // Your username
@@ -18,16 +19,17 @@ var connection = mysql.createConnection({
 function Bamazon() {
 	
 
-	// Construct the db query string
+	// Select everything from products in the Database
 	db = 'SELECT * FROM products';
 
-	// Make the db query
+	// Connects to the database and uses the previous var to select products
 	connection.query(db, function(err, data) {
 		if (err) throw err;
 
 		console.log('Inventory:');
 		console.log('-------------');
-
+        
+        //Displays inventory so user can see details of the products
 		var item = '';
 		for (let i = 0; i < data.length; i++) {
 			
